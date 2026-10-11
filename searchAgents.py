@@ -34,7 +34,6 @@ description for details.
 Good luck and happy searching!
 """
 
-from tracemalloc import start
 from turtle import position
 from typing import List, Tuple, Any
 from game import Directions
@@ -478,8 +477,39 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     problem.heuristicInfo['wallCount']
     """
     position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+
+    food = foodGrid.asList()
+    if not food:
+        return 0
+
+    maps = problem.heuristicInfo.setdefault("distanceMaps", {})
+
+    def distances_from(start):
+        if start not in maps:
+            distances = {start: 0}
+            queue = util.Queue()
+            queue.push(start)
+
+            while not queue.isEmpty():
+                x, y = queue.pop()
+                for nx, ny in ((x + 1, y), (x - 1, y),
+                           (x, y + 1), (x, y - 1)):
+                    if not problem.walls[nx][ny] and (nx, ny) not in distances:
+                        distances[(nx, ny)] = distances[(x, y)] + 1
+                        queue.push((nx, ny))
+
+            maps[start] = distances
+        return maps[start]
+
+    from_position = {dot: distances_from(dot)[position] for dot in food}
+    if len(food) == 1:
+        return from_position[food[0]]
+
+    return max(
+        min(from_position[a], from_position[b]) + distances_from(a)[b]
+        for i, a in enumerate(food)
+        for b in food[i + 1:]
+    )
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
