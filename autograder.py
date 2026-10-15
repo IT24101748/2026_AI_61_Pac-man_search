@@ -113,7 +113,9 @@ def setModuleName(module, filename):
             setattr(o, '__file__', filename)
         elif type(o) == classType:
             setattr(o, '__file__', filename)
-            # TODO: assign member __file__'s?
+            for member in vars(o).values():
+                if type(member) == functionType:
+                    setattr(member, '__file__', filename)
         #print(i, type(o))
 
 

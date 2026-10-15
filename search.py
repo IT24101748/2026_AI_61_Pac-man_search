@@ -87,23 +87,36 @@ def depthFirstSearch(problem: SearchProblem):
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
+    #create a stack to hold the fringe (the nodes to be explored)
     fringe = util.Stack()
+
+    #add the start state to the fringe with an empty list of actions
     fringe.push((problem.getStartState(), []))
+
+    #create a set to hold the explored nodes
     explored = set()
 
+    #loop until the fringe is empty
     while not fringe.isEmpty():
+        #pop most recent node from the fringe
         state, actions = fringe.pop()
 
+        #check if the node is a goal state
         if problem.isGoalState(state):
             return actions
 
+        #check if the node has already been explored
         if state in explored:
             continue
 
+        #mark the node as explored
         explored.add(state)
 
+        #loop through the successors of the node
         for successor, action, _ in problem.getSuccessors(state):
+            #check if the successor has not been explored
             if successor not in explored:
+                #add the successor to the fringe with the updated list of actions
                 fringe.push((successor, actions + [action]))
 
     return []

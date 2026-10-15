@@ -282,10 +282,13 @@ class CornersProblem(search.SearchProblem):
         """
         Stores the walls, pacman's starting position and corners.
         """
+        #self.walls = startingGameState.getWalls()
         self.walls = startingGameState.getWalls()
         self.startingPosition = startingGameState.getPacmanPosition()
         top, right = self.walls.height-2, self.walls.width-2
         self.corners = ((1,1), (1,top), (right, 1), (right, top))
+
+        # If there is no food in one of the corners, print a warning message
         for corner in self.corners:
             if not startingGameState.hasFood(*corner):
                 print('Warning: no food in corner ' + str(corner))
@@ -296,6 +299,7 @@ class CornersProblem(search.SearchProblem):
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
+        #condition to check if the starting position is a corner, if so add it to the visited set
         visited = frozenset([self.startingPosition] if self.startingPosition in self.corners else [])
         return (self.startingPosition, visited)
 
@@ -305,6 +309,7 @@ class CornersProblem(search.SearchProblem):
         """
         Returns whether this search state is a goal state of the problem.
         """
+        #state[1] is the visited set, if it has all 4 corners then we have reached the goal state
         return len(state[1]) == 4
         util.raiseNotDefined()
 
@@ -318,8 +323,9 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
-
+        #create a list to hold the successors
         successors = []
+        #check all 4 directions for possible successors at one directiona a time
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
             # Here's a code snippet for figuring out whether a new position hits a wall:
@@ -328,14 +334,24 @@ class CornersProblem(search.SearchProblem):
             #   nextx, nexty = int(x + dx), int(y + dy)
             #   hitsWall = self.walls[nextx][nexty]
 
+            #unpack the current state into position and visited set
             position, visited = state
+
+            #dx, dy = Actions.directionToVector(action) gives the change in x and y coordinates for the given action (direction).
             dx, dy = Actions.directionToVector(action)
+
+            #calculate the next position based on the current position and the action
             next_position = (int(position[0] + dx), int(position[1] + dy))
 
+            #check if the next position is not a wall, if so add it to the successors list
             if not self.walls[next_position[0]][next_position[1]]:
                 next_visited = visited
+
+                #if the next position is a corner, add it to the visited set
                 if next_position in self.corners:
                     next_visited = visited | frozenset([next_position])
+
+                #append the successor state, action, and step cost to the successors list
                 successors.append(((next_position, next_visited), action, 1))
 
         self._expanded += 1 # DO NOT CHANGE
@@ -346,7 +362,10 @@ class CornersProblem(search.SearchProblem):
         Returns the cost of a particular sequence of actions.  If those actions
         include an illegal move, return 999999.  This is implemented for you.
         """
+        #return penalty if the actions are None
         if actions == None: return 999999
+
+        #starting position of pacman
         x,y= self.startingPosition
         for action in actions:
             dx, dy = Actions.directionToVector(action)
@@ -371,16 +390,21 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
+    #permutations is used to generate all possible orders of visiting the remaining corners 
     from itertools import permutations
     position, visited = state
+
+    # get the remaining corners that have not been visited yet
     remaining = [corner for corner in corners if corner not in visited]
 
     if not remaining:
         return 0 # Default to trivial solution
 
+    # Define a function to calculate the Manhattan distance between two points
     def distance(a, b):
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
+    # Calculate the minimum distance to visit all remaining corners in any order
     return min(distance(position, order[0]) +sum(distance(order[i], order[i + 1])
         for i in range(len(order) - 1))
     for order in permutations(remaining)
@@ -486,12 +510,16 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
 
     def distances_from(start):
         if start not in maps:
+            # starting point value is 0, all other points are infinity
+            # use BFS to find the shortest distance to all other points
             distances = {start: 0}
             queue = util.Queue()
             queue.push(start)
 
+            # use BFS to find the shortest distance to all other points
             while not queue.isEmpty():
                 x, y = queue.pop()
+                # check all 4 directions for possible successors at one directiona a time
                 for nx, ny in ((x + 1, y), (x - 1, y),
                            (x, y + 1), (x, y - 1)):
                     if not problem.walls[nx][ny] and (nx, ny) not in distances:
